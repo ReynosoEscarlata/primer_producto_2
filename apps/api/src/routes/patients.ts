@@ -9,46 +9,11 @@ import {
 import { prisma } from '../lib/prisma.js';
 import { sendError } from '../lib/errors.js';
 import { requireAuth, requireRole } from '../lib/authenticate.js';
-import { isFutureDate, isSameUtcCalendarDay, thirtyDaysAgo, toIsoDate } from '../lib/date.js';
-import { toNumberOrNull } from '../lib/serialize.js';
+import { isFutureDate, isSameUtcCalendarDay } from '../lib/date.js';
+import { serializeDailyLog, serializeMoodEntry, serializeProfile } from '../lib/serialize.js';
+import { getDailyLogsForPatient, getMoodEntriesForPatient } from '../lib/patient-history.js';
 
 const PATIENT_ONLY = [requireAuth, requireRole('PATIENT')];
-
-function serializeDailyLog(log: { date: Date; waterMl: number; exerciseMinutes: number; sleepHours: unknown }) {
-  return {
-    date: toIsoDate(log.date),
-    water_ml: log.waterMl,
-    exercise_minutes: log.exerciseMinutes,
-    sleep_hours: toNumberOrNull(log.sleepHours),
-  };
-}
-
-function serializeMoodEntry(entry: { id: string; occurredAt: Date; value: number; note: string | null }) {
-  return {
-    id: entry.id,
-    occurred_at: entry.occurredAt.toISOString(),
-    value: entry.value,
-    note: entry.note,
-  };
-}
-
-function serializeProfile(user: {
-  id: string;
-  email: string;
-  fullName: string;
-  birthDate: Date | null;
-  height: unknown;
-  weight: unknown;
-}) {
-  return {
-    id: user.id,
-    email: user.email,
-    full_name: user.fullName,
-    birth_date: user.birthDate ? toIsoDate(user.birthDate) : null,
-    height: toNumberOrNull(user.height),
-    weight: toNumberOrNull(user.weight),
-  };
-}
 
 export async function patientRoutes(app: FastifyInstance) {
   app.post('/patients/me/daily-logs', { preHandler: PATIENT_ONLY }, async (request, reply) => {
@@ -115,13 +80,7 @@ export async function patientRoutes(app: FastifyInstance) {
   });
 
   app.get('/patients/me/daily-logs', { preHandler: PATIENT_ONLY }, async (request, reply) => {
-    const patientId = request.user!.sub;
-    const logs = await prisma.dailyLog.findMany({
-      where: { patientId, date: { gte: thirtyDaysAgo() } },
-      orderBy: { date: 'asc' },
-    });
-
-    return reply.code(200).send(logs.map(serializeDailyLog));
+    return reply.code(200).send(await getDailyLogsForPatient(request.user!.sub));
   });
 
   app.post('/patients/me/mood-entries', { preHandler: PATIENT_ONLY }, async (request, reply) => {
@@ -143,12 +102,7 @@ export async function patientRoutes(app: FastifyInstance) {
   });
 
   app.get('/patients/me/mood-entries', { preHandler: PATIENT_ONLY }, async (request, reply) => {
-    const entries = await prisma.moodEntry.findMany({
-      where: { patientId: request.user!.sub, occurredAt: { gte: thirtyDaysAgo() } },
-      orderBy: { occurredAt: 'asc' },
-    });
-
-    return reply.code(200).send(entries.map(serializeMoodEntry));
+    return reply.code(200).send(await getMoodEntriesForPatient(request.user!.sub));
   });
 
   app.get('/patients/me/profile', { preHandler: PATIENT_ONLY }, async (request, reply) => {
