@@ -40,3 +40,21 @@ export interface PatientDetail {
   daily_logs: DailyLog[];
   mood_entries: MoodEntry[];
 }
+
+export interface AdminUserSummary {
+  id: string;
+  full_name: string;
+  email: string;
+  is_active: boolean;
+}
+
+export interface AdminPatientSummary extends AdminUserSummary {
+  holder: { id: string; full_name: string; email: string } | null;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  full_name: string;
+  role: 'PATIENT' | 'NUTRITIONIST';
+}

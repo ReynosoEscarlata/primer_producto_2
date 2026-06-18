@@ -4,6 +4,7 @@ import cookie from '@fastify/cookie';
 import { authRoutes } from './routes/auth.js';
 import { patientRoutes } from './routes/patients.js';
 import { nutritionistRoutes } from './routes/nutritionists.js';
+import { adminRoutes } from './routes/admin.js';
 
 export async function buildApp() {
   const app = Fastify({ logger: true });
@@ -21,6 +22,7 @@ export async function buildApp() {
   await app.register(authRoutes);
   await app.register(patientRoutes);
   await app.register(nutritionistRoutes);
+  await app.register(adminRoutes);
 
   return app;
 }
