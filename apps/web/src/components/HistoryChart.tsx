@@ -14,7 +14,11 @@ function MiniBarChart({ label, values, max }: MiniBarChartProps) {
   return (
     <div>
       <p className="mb-1 text-xs text-slate-500">{label}</p>
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-12 w-full" preserveAspectRatio="none">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-12 w-full sm:h-16 lg:h-20"
+        preserveAspectRatio="none"
+      >
         {values.map((value, index) => {
           const barHeight = max > 0 ? (value / max) * height : 0;
           return (
@@ -39,15 +43,21 @@ interface HistoryChartProps {
 
 export function HistoryChart({ logs }: HistoryChartProps) {
   if (logs.length === 0) {
-    return <p className="text-sm text-slate-500">Todavía no hay logs en los últimos 30 días.</p>;
+    return (
+      <div className="rounded border border-slate-200 bg-white p-4">
+        <p className="text-sm text-slate-500">Todavía no hay logs en los últimos 30 días.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-3 rounded border border-slate-200 p-4">
+    <div className="space-y-3 rounded border border-slate-200 bg-white p-4">
       <h2 className="font-medium text-slate-900">Historial (30 días)</h2>
-      <MiniBarChart label="Agua (ml)" values={logs.map((l) => l.water_ml)} max={10000} />
-      <MiniBarChart label="Ejercicio (min)" values={logs.map((l) => l.exercise_minutes)} max={1440} />
-      <MiniBarChart label="Sueño (hs)" values={logs.map((l) => l.sleep_hours)} max={24} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <MiniBarChart label="Agua (ml)" values={logs.map((l) => l.water_ml)} max={10000} />
+        <MiniBarChart label="Ejercicio (min)" values={logs.map((l) => l.exercise_minutes)} max={1440} />
+        <MiniBarChart label="Sueño (hs)" values={logs.map((l) => l.sleep_hours)} max={24} />
+      </div>
     </div>
   );
 }

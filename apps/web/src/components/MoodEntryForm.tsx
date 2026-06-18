@@ -32,7 +32,7 @@ export function MoodEntryForm({ entries, onCreated }: MoodEntryFormProps) {
   }
 
   return (
-    <div className="space-y-3 rounded border border-slate-200 p-4">
+    <div className="space-y-3 rounded border border-slate-200 bg-white p-4">
       <h2 className="font-medium text-slate-900">Estado de ánimo</h2>
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="space-y-1">
