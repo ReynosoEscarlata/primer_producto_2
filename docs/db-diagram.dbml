@@ -18,10 +18,38 @@
 //   6. Misma validación extendida a DailyLog.patient_id y MoodEntry.patient_id (triggers
 //      trg_check_daily_log_patient_role y trg_check_mood_entry_patient_role), por el mismo
 //      motivo: nada impedía antes que esas filas referenciaran un User con role=NUTRITIONIST.
+//
+// Revisión 3 — surgió durante el diseño de endpoints (docs/SPEC.md), dominio Auth:
+//   7. Se agrega el rol ADMIN al enum: solo un admin puede asignar el rol NUTRITIONIST a un
+//      usuario, así que admin necesita ser un actor real con su propio login, no un script manual.
+//   8. Se agregan birth_date, height, weight a User: opcionales, solo tienen sentido cuando
+//      role=PATIENT (mismo patrón que nutritionist_id en el borrador original, antes de
+//      moverlo a PatientNutritionist). height/weight van como decimal positivo — unidades
+//      confirmadas: height en metros (m), weight en kilogramos (kg). CHECK constraints
+//      documentados al final del archivo (DBML no soporta CHECK nativamente, igual que ya
+//      pasaba con el índice parcial de PatientNutritionist).
+//
+// Revisión 4 — dominio Paciente:
+//   9. DailyLog.water_ml / exercise_minutes / sleep_hours pasan a NOT NULL: la regla de
+//      negocio es que ningún campo puede ir vacío al crear ni al editar un log, así que la
+//      BD ahora lo refleja en vez de dejarlo solo como validación de Zod.
+//
+// Revisión 5 — dominio Admin:
+//   10. Se agrega User.is_active (boolean, default true): un admin puede desactivar una
+//       cuenta (ej. una nutrióloga), y esa cuenta deja de poder loguearse. Desactivar NO
+//       cierra automáticamente sus relaciones en PatientNutritionist — la reasignación de
+//       sus pacientes la hace un admin explícitamente, por diseño (para no perder el rastro
+//       de qué pacientes quedaron "huérfanos" silenciosamente).
+//   11. Solo existe un ADMIN (el seed inicial del proyecto, creado directo en la BD — no hay
+//       endpoint para crear otro). Se agrega un índice único parcial que lo garantiza también
+//       a nivel de esquema, no solo por convención de la app: ver UNIQUE WHERE role='ADMIN'
+//       al final del archivo. Ni "crear usuario" ni "modificar rol" (dominio Admin, SPEC.md)
+//       aceptan role=ADMIN como valor de entrada.
 
 Enum user_role {
   PATIENT
   NUTRITIONIST
+  ADMIN
 }
 
 Table User {
@@ -30,10 +58,14 @@ Table User {
   password_hash varchar [not null]
   full_name varchar [not null]
   role user_role [not null]
+  birth_date date [note: 'Opcional. Solo se usa cuando role=PATIENT — no forzado por constraint, ver limitación en la Note de la tabla.']
+  height decimal(3,2) [note: 'Opcional, en metros (ej. 1.75). Solo se usa cuando role=PATIENT. CHECK(height IS NULL OR height > 0) documentado al final del archivo.']
+  weight decimal(5,2) [note: 'Opcional, en kg. Solo se usa cuando role=PATIENT. CHECK(weight IS NULL OR weight > 0) documentado al final del archivo.']
+  is_active boolean [not null, default: true, note: 'Una cuenta desactivada no puede loguearse (lo valida /auth/login). Desactivar no reasigna ni cierra relaciones de PatientNutritionist automáticamente.']
   created_at timestamp [not null, default: `now()`]
   updated_at timestamp [not null, default: `now()`]
 
-  Note: 'Un único modelo para ambos roles: cada fila tiene exactamente un role, nunca los dos a la vez. Si una misma persona necesita actuar como paciente y como nutricionista, son dos filas distintas (dos cuentas, dos emails), no una fila con doble rol. La relación paciente-nutrióloga ya no vive acá (ver PatientNutritionist) — se sacó nutritionist_id de este borrador. La integridad de qué role tiene cada lado de esa relación se valida con un trigger (ver PatientNutritionist), porque una FK simple solo confirma que el id existe, no qué role tiene.'
+  Note: 'Un único modelo para los tres roles: cada fila tiene exactamente un role, nunca dos a la vez. Si una misma persona necesita actuar como paciente y como nutricionista, son dos filas distintas (dos cuentas, dos emails), no una fila con doble rol. La relación paciente-nutrióloga no vive acá (ver PatientNutritionist) — se sacó nutritionist_id de este borrador. La integridad de qué role tiene cada lado de esa relación se valida con un trigger (ver PatientNutritionist), porque una FK simple solo confirma que el id existe, no qué role tiene. Limitación conocida y no resuelta (igual naturaleza que la anterior, pendiente de decisión): nada a nivel de esquema impide que birth_date/height/weight se llenen en una fila con role=NUTRITIONIST o ADMIN; quedan opcionales para los tres roles y la regla "solo aplica a PATIENT" se valida en Zod/app, no en la BD.'
 }
 
 Table PatientNutritionist {
@@ -56,9 +88,9 @@ Table DailyLog {
   id uuid [pk, default: `gen_random_uuid()`]
   patient_id uuid [not null, ref: > User.id]
   date date [not null]
-  water_ml int
-  exercise_minutes int
-  sleep_hours decimal(3,1)
+  water_ml int [not null]
+  exercise_minutes int [not null]
+  sleep_hours decimal(3,1) [not null]
   created_at timestamp [not null, default: `now()`]
   updated_at timestamp [not null, default: `now()`]
 
@@ -154,3 +186,17 @@ Table RefreshToken {
 // CREATE TRIGGER trg_check_mood_entry_patient_role
 // BEFORE INSERT OR UPDATE ON "MoodEntry"
 // FOR EACH ROW EXECUTE FUNCTION check_patient_role();
+//
+// -- CHECK constraints para User.height / User.weight (positivos, NULL permitido
+// -- porque son opcionales). No requieren trigger, son ALTER TABLE simples.
+//
+// ALTER TABLE "User" ADD CONSTRAINT chk_user_height_positive
+//   CHECK (height IS NULL OR height > 0);
+//
+// ALTER TABLE "User" ADD CONSTRAINT chk_user_weight_positive
+//   CHECK (weight IS NULL OR weight > 0);
+//
+// -- Garantiza que nunca pueda existir más de un User con role=ADMIN, a nivel de BD
+// -- y no solo por convención de la app (el admin único se siembra directo en la BD).
+//
+// CREATE UNIQUE INDEX uniq_single_admin ON "User" (role) WHERE role = 'ADMIN';
