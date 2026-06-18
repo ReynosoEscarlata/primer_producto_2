@@ -20,3 +20,23 @@ export interface Profile {
   height: number | null;
   weight: number | null;
 }
+
+export interface NutritionistPatientListItem {
+  id: string;
+  full_name: string;
+  email: string;
+  last_log_date: string | null;
+}
+
+export interface PatientSearchResult {
+  id: string;
+  full_name: string;
+  email: string;
+  holder: { full_name: string; email: string } | null;
+}
+
+export interface PatientDetail {
+  profile: Profile;
+  daily_logs: DailyLog[];
+  mood_entries: MoodEntry[];
+}

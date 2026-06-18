@@ -8,6 +8,10 @@ export function HomePage() {
     return <Navigate to="/patient" replace />;
   }
 
+  if (user?.role === 'NUTRITIONIST') {
+    return <Navigate to="/nutritionist" replace />;
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
       <p className="text-slate-600">Tu panel todavía no está disponible en esta versión.</p>

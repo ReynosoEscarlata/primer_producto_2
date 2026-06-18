@@ -5,6 +5,8 @@ import { LoginPage } from './pages/LoginPage.js';
 import { RegisterPage } from './pages/RegisterPage.js';
 import { HomePage } from './pages/HomePage.js';
 import { PatientDashboardPage } from './pages/PatientDashboardPage.js';
+import { NutritionistDashboardPage } from './pages/NutritionistDashboardPage.js';
+import { PatientDetailPage } from './pages/PatientDetailPage.js';
 
 function App() {
   return (
@@ -20,6 +22,11 @@ function App() {
 
           <Route element={<ProtectedRoute allow={['PATIENT']} />}>
             <Route path="/patient" element={<PatientDashboardPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute allow={['NUTRITIONIST']} />}>
+            <Route path="/nutritionist" element={<NutritionistDashboardPage />} />
+            <Route path="/nutritionist/patients/:patientId" element={<PatientDetailPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
