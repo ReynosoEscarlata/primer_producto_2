@@ -44,3 +44,21 @@ export function serializeProfile(user: {
     weight: toNumberOrNull(user.weight),
   };
 }
+
+export function serializeAdminUser(user: { id: string; email: string; fullName: string; role: string }) {
+  return {
+    id: user.id,
+    email: user.email,
+    full_name: user.fullName,
+    role: user.role,
+  };
+}
+
+export function serializeAdminUserSummary(user: { id: string; email: string; fullName: string; isActive: boolean }) {
+  return {
+    id: user.id,
+    email: user.email,
+    full_name: user.fullName,
+    is_active: user.isActive,
+  };
+}
