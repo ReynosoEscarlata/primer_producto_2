@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { verifyAccessToken } from './jwt.js';
+import { verifyAccessToken, type AccessTokenPayload } from './jwt.js';
 import { sendError } from './errors.js';
 
 export async function requireAuth(request: FastifyRequest, reply: FastifyReply): Promise<void> {
@@ -15,4 +15,12 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
   } catch {
     return sendError(reply, 401, 'Access token inválido o expirado');
   }
+}
+
+export function requireRole(role: AccessTokenPayload['role']) {
+  return async function (request: FastifyRequest, reply: FastifyReply): Promise<void> {
+    if (request.user?.role !== role) {
+      return sendError(reply, 403, 'No tenés permiso para acceder a este recurso');
+    }
+  };
 }
