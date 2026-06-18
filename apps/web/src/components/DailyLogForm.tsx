@@ -46,7 +46,7 @@ export function DailyLogForm({ todayLog, onSaved }: DailyLogFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded border border-slate-200 p-4">
+    <form onSubmit={handleSubmit} className="space-y-3 rounded border border-slate-200 bg-white p-4">
       <h2 className="font-medium text-slate-900">Hábitos de hoy</h2>
 
       <div className="space-y-1">

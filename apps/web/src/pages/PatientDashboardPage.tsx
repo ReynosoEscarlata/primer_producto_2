@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { apiJson } from '../lib/api.js';
-import { useAuth } from '../lib/auth-context.js';
 import type { DailyLog, MoodEntry, Profile } from '../lib/types.js';
 import { DailyLogForm } from '../components/DailyLogForm.js';
 import { HistoryChart } from '../components/HistoryChart.js';
 import { MoodEntryForm } from '../components/MoodEntryForm.js';
 import { ProfileForm } from '../components/ProfileForm.js';
+import { PageHeader } from '../components/PageHeader.js';
+import { LogoutButton } from '../components/LogoutButton.js';
 
 function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
 export function PatientDashboardPage() {
-  const { logout } = useAuth();
   const [logs, setLogs] = useState<DailyLog[] | null>(null);
   const [moodEntries, setMoodEntries] = useState<MoodEntry[] | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -37,21 +37,21 @@ export function PatientDashboardPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 p-4">
-      <header className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-slate-900">Hola, {profile.full_name}</h1>
-        <button onClick={() => logout()} className="text-sm text-slate-600 underline">
-          Cerrar sesión
-        </button>
-      </header>
+    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-5xl space-y-6">
+        <PageHeader title={`Hola, ${profile.full_name}`} actions={<LogoutButton />} />
 
-      <DailyLogForm todayLog={todayLog} onSaved={handleLogSaved} />
-      <HistoryChart logs={logs} />
-      <MoodEntryForm
-        entries={moodEntries}
-        onCreated={(entry) => setMoodEntries((prev) => [...(prev ?? []), entry])}
-      />
-      <ProfileForm profile={profile} onSaved={setProfile} />
+        <HistoryChart logs={logs} />
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <DailyLogForm todayLog={todayLog} onSaved={handleLogSaved} />
+          <MoodEntryForm
+            entries={moodEntries}
+            onCreated={(entry) => setMoodEntries((prev) => [...(prev ?? []), entry])}
+          />
+          <ProfileForm profile={profile} onSaved={setProfile} />
+        </div>
+      </div>
     </main>
   );
 }

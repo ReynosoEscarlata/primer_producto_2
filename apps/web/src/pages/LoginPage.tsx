@@ -26,9 +26,12 @@ export function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
-        <h1 className="text-center text-xl font-semibold text-slate-900">Iniciar sesión</h1>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-sm space-y-4 sm:rounded-lg sm:border sm:border-slate-200 sm:bg-white sm:p-8 sm:shadow-sm"
+      >
+        <h1 className="text-center text-xl font-semibold text-slate-900 sm:text-2xl">Iniciar sesión</h1>
 
         <div className="space-y-1">
           <label htmlFor="email" className="block text-sm font-medium text-slate-700">
