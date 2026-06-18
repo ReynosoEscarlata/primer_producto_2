@@ -49,6 +49,7 @@ Body:
 |--------|--------------|
 | 400 | Body malformado / JSON inválido |
 | 422 | `email` ya registrado |
+| 422 | `password` no cumple la regla (mínimo 6 caracteres, solo letras y números) |
 | 422 | `height`/`weight` no son números positivos |
 | 422 | `birth_date` no respeta formato `YYYY-MM-DD` |
 
@@ -104,6 +105,7 @@ Sin body. El refresh token viaja en la cookie `httpOnly`.
 | Código | Cuándo ocurre |
 |--------|--------------|
 | 401 | Cookie de refresh ausente, con hash que no matchea ninguna fila, expirada, o `revoked_at` ya seteado |
+| 401 | El usuario del token ya no existe o tiene `is_active = false` (cuenta desactivada después de emitido el refresh token) |
 
 ---
 

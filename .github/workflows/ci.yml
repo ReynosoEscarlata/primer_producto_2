@@ -8,10 +8,22 @@ on:
 jobs:
   lint-build-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nutri_habits
+          POSTGRES_PASSWORD: nutri_habits
+          POSTGRES_DB: nutri_habits
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nutri_habits"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     env:
-      # No se conecta a una BD real en CI todavía — alcanza con que la variable
-      # exista para que `prisma generate` (sin red) pueda leer el schema.
-      DATABASE_URL: postgresql://user:password@localhost:5432/nutri_habits
+      DATABASE_URL: postgresql://nutri_habits:nutri_habits@localhost:5432/nutri_habits
       WEB_ORIGIN: http://localhost:5173
       JWT_ACCESS_SECRET: ci-placeholder
       JWT_REFRESH_SECRET: ci-placeholder
@@ -27,6 +39,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Apply database migrations
+        run: npm run db:migrate:deploy --workspace=apps/api
 
       - name: Lint
         run: npm run lint
