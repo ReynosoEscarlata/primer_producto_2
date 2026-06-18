@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isoDateSchema } from './common.js';
 
 const PASSWORD_REGEX = /^[a-zA-Z0-9]+$/;
 
@@ -7,10 +8,7 @@ export const passwordSchema = z
   .min(6, 'La contraseña debe tener al menos 6 caracteres')
   .regex(PASSWORD_REGEX, 'La contraseña solo puede contener letras y números');
 
-export const birthDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'birth_date debe tener formato YYYY-MM-DD')
-  .refine((value) => !Number.isNaN(new Date(value).getTime()), 'birth_date no es una fecha válida');
+export const birthDateSchema = isoDateSchema;
 
 export const registerSchema = z
   .object({

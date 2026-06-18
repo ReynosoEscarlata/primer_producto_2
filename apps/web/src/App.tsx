@@ -1,11 +1,31 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './lib/auth-context.js';
+import { ProtectedRoute } from './components/ProtectedRoute.js';
+import { LoginPage } from './pages/LoginPage.js';
+import { RegisterPage } from './pages/RegisterPage.js';
+import { HomePage } from './pages/HomePage.js';
+import { PatientDashboardPage } from './pages/PatientDashboardPage.js';
+
 function App() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-2 p-4 text-center">
-      <h1 className="text-2xl font-semibold text-slate-900">nutri-habits</h1>
-      <p className="text-sm text-slate-500">
-        Scaffolding listo. Las pantallas reales se implementan según docs/SPEC.md.
-      </p>
-    </main>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+
+          <Route element={<ProtectedRoute allow={['PATIENT', 'NUTRITIONIST', 'ADMIN']} />}>
+            <Route path="/" element={<HomePage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute allow={['PATIENT']} />}>
+            <Route path="/patient" element={<PatientDashboardPage />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

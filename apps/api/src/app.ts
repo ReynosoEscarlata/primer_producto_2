@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import { authRoutes } from './routes/auth.js';
+import { patientRoutes } from './routes/patients.js';
 
 export async function buildApp() {
   const app = Fastify({ logger: true });
@@ -17,6 +18,7 @@ export async function buildApp() {
   app.get('/health', async () => ({ status: 'ok' }));
 
   await app.register(authRoutes);
+  await app.register(patientRoutes);
 
   return app;
 }
