@@ -1,0 +1,110 @@
+// Traducción de docs/db-diagram.dbml (diagrama aprobado). No editar el modelo de datos
+// acá directamente — cualquier cambio empieza en el diagrama, según la regla del CLAUDE.md.
+//
+// Lo que Prisma NO puede expresar y por eso vive solo en la migración SQL manual
+// (prisma/migrations/0_init/migration.sql), documentado también al final del .dbml:
+//   - Los triggers de integridad de rol (trg_check_patient_nutritionist_roles,
+//     trg_check_daily_log_patient_role, trg_check_mood_entry_patient_role).
+//   - Los CHECK de User.height / User.weight positivos.
+//   - El índice único parcial UNIQUE(patient_id) WHERE ended_at IS NULL en
+//     PatientNutritionist (la regla real de "una nutrióloga activa por paciente").
+//   - El índice parcial WHERE ended_at IS NULL en PatientNutritionist.nutritionist_id.
+//   - El índice único parcial UNIQUE(role) WHERE role = 'ADMIN' en User.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PATIENT
+  NUTRITIONIST
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  fullName     String    @map("full_name")
+  role         UserRole
+  birthDate    DateTime? @map("birth_date") @db.Date
+  height       Decimal?  @db.Decimal(3, 2)
+  weight       Decimal?  @db.Decimal(5, 2)
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @map("updated_at")
+
+  dailyLogs             DailyLog[]
+  moodEntries           MoodEntry[]
+  refreshTokens         RefreshToken[]
+  patientRelations      PatientNutritionist[] @relation("PatientSideOfRelation")
+  nutritionistRelations PatientNutritionist[] @relation("NutritionistSideOfRelation")
+
+  @@map("User")
+}
+
+model PatientNutritionist {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  nutritionistId String    @map("nutritionist_id") @db.Uuid
+  startedAt      DateTime  @default(now()) @map("started_at")
+  endedAt        DateTime? @map("ended_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  patient      User @relation("PatientSideOfRelation", fields: [patientId], references: [id])
+  nutritionist User @relation("NutritionistSideOfRelation", fields: [nutritionistId], references: [id])
+
+  // Los índices reales (unique parcial en patientId, parcial en nutritionistId)
+  // se agregan en la migración SQL manual — Prisma no soporta partial indexes.
+  @@map("PatientNutritionist")
+}
+
+model DailyLog {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId       String   @map("patient_id") @db.Uuid
+  date            DateTime @db.Date
+  waterMl         Int      @map("water_ml")
+  exerciseMinutes Int      @map("exercise_minutes")
+  sleepHours      Decimal  @map("sleep_hours") @db.Decimal(3, 1)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @map("updated_at")
+
+  patient User @relation(fields: [patientId], references: [id])
+
+  @@unique([patientId, date], map: "uniq_patient_date")
+  @@map("DailyLog")
+}
+
+model MoodEntry {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId  String   @map("patient_id") @db.Uuid
+  occurredAt DateTime @map("occurred_at")
+  value      Int
+  note       String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  patient User @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, occurredAt], map: "idx_mood_patient_occurred")
+  @@map("MoodEntry")
+}
+
+model RefreshToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([tokenHash], map: "uniq_refresh_token_hash")
+  @@index([userId], map: "idx_refresh_token_user")
+  @@map("RefreshToken")
+}
