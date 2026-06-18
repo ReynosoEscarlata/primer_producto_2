@@ -1,0 +1,156 @@
+// nutri-habits — diagrama de base de datos
+// Pegar este archivo completo en dbdiagram.io (New diagram) para visualizarlo.
+// Diseñado antes de tocar schema.prisma, según la restricción del brief.
+//
+// Revisión 2 — cambios respecto al borrador inicial (motivo corto, detalle en cada Note):
+//   1. Relación paciente-nutrióloga: se reemplaza User.nutritionist_id (self-FK 1:N) por
+//      la tabla PatientNutritionist, para soportar N:N e historial de asignaciones.
+//   2. Se agrega MoodEntry como tabla separada (no columna en DailyLog), porque mood se
+//      registra como evento cronometrado y puede repetirse varias veces el mismo día.
+//   3. RefreshToken: se agregan índices en user_id y token_hash (lookup en cada refresh
+//      y revocación masiva por usuario eran table scans sin esto).
+//   4. DailyLog y su UNIQUE(patient_id, date) se mantienen sin cambios: ya resuelven la
+//      concurrencia de inserts duplicados del mismo día a nivel de esquema.
+//   5. Se agrega el trigger trg_check_patient_nutritionist_roles (ver el bloque de SQL al
+//      final del archivo) para que Postgres rechace una fila de PatientNutritionist cuyo
+//      patient_id no sea un User con role=PATIENT, o cuyo nutritionist_id no sea role=NUTRITIONIST.
+//      Una FK simple no alcanza para esto: solo valida que el id exista, no qué role tiene.
+//   6. Misma validación extendida a DailyLog.patient_id y MoodEntry.patient_id (triggers
+//      trg_check_daily_log_patient_role y trg_check_mood_entry_patient_role), por el mismo
+//      motivo: nada impedía antes que esas filas referenciaran un User con role=NUTRITIONIST.
+
+Enum user_role {
+  PATIENT
+  NUTRITIONIST
+}
+
+Table User {
+  id uuid [pk, default: `gen_random_uuid()`]
+  email varchar [not null, unique]
+  password_hash varchar [not null]
+  full_name varchar [not null]
+  role user_role [not null]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  Note: 'Un único modelo para ambos roles: cada fila tiene exactamente un role, nunca los dos a la vez. Si una misma persona necesita actuar como paciente y como nutricionista, son dos filas distintas (dos cuentas, dos emails), no una fila con doble rol. La relación paciente-nutrióloga ya no vive acá (ver PatientNutritionist) — se sacó nutritionist_id de este borrador. La integridad de qué role tiene cada lado de esa relación se valida con un trigger (ver PatientNutritionist), porque una FK simple solo confirma que el id existe, no qué role tiene.'
+}
+
+Table PatientNutritionist {
+  id uuid [pk, default: `gen_random_uuid()`]
+  patient_id uuid [not null, ref: > User.id]
+  nutritionist_id uuid [not null, ref: > User.id]
+  started_at timestamp [not null, default: `now()`]
+  ended_at timestamp [note: 'NULL = relación activa. Se cierra (set ended_at) en vez de borrar la fila, para conservar historial.']
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (patient_id) [unique, name: 'uniq_active_patient_per_nutritionist', note: 'La regla de negocio actual (un paciente, una nutrióloga activa a la vez) se fuerza con un UNIQUE PARCIAL: UNIQUE(patient_id) WHERE ended_at IS NULL. DBML no tiene sintaxis nativa para índices parciales, así que esto se traduce a una migración SQL manual en Prisma (no a un @@unique simple) — dejarlo anotado para no perder el requisito en la traducción. Si en el futuro un paciente puede tener varias nutriólogas activas a la vez, este es el único punto que hay que tocar.']
+    (nutritionist_id) [name: 'idx_active_patients_per_nutritionist', note: 'Pensado como índice parcial WHERE ended_at IS NULL en la migración real, para que "lista de pacientes activos de esta nutrióloga" no escanee relaciones históricas.']
+  }
+
+  Note: 'Tabla intermedia para la relación paciente-nutrióloga. Reemplaza el self-FK 1:N del borrador anterior: estructuralmente ya es N:N y conserva historial (started_at/ended_at), aunque hoy la regla de negocio siga siendo 1 nutrióloga activa por paciente (forzada por el unique parcial, no por la forma de la tabla). La integridad de roles (patient_id debe ser role=PATIENT, nutritionist_id debe ser role=NUTRITIONIST) ya no queda solo documentada: se fuerza con el trigger trg_check_patient_nutritionist_roles (SQL al final del archivo), porque una FK no puede expresar esa condición.'
+}
+
+Table DailyLog {
+  id uuid [pk, default: `gen_random_uuid()`]
+  patient_id uuid [not null, ref: > User.id]
+  date date [not null]
+  water_ml int
+  exercise_minutes int
+  sleep_hours decimal(3,1)
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (patient_id, date) [unique, name: 'uniq_patient_date']
+  }
+
+  Note: 'Sin cambios respecto al borrador. Una fila por paciente por día, para métricas que son genuinamente "un valor por día" (agua, ejercicio, sueño). UNIQUE(patient_id, date) resuelve la concurrencia: ante dos inserts simultáneos del mismo día, Postgres rechaza el segundo (o se hace upsert vía ON CONFLICT) en vez de crear un duplicado — la app todavía tiene que capturar ese error/usar upsert, pero el esquema ya lo garantiza. El mismo índice cubre la query de historial de 30 días (WHERE patient_id = ? AND date >= ? ORDER BY date) sin necesitar un índice adicional. patient_id ahora también se valida con el trigger trg_check_daily_log_patient_role (SQL al final del archivo): rechaza una fila si el id referenciado no es un User con role=PATIENT.'
+}
+
+Table MoodEntry {
+  id uuid [pk, default: `gen_random_uuid()`]
+  patient_id uuid [not null, ref: > User.id]
+  occurred_at timestamp [not null, note: 'Momento exacto del registro, no solo la fecha: a diferencia de agua/ejercicio/sueño, mood puede registrarse varias veces el mismo día.']
+  value int [not null]
+  note varchar
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (patient_id, occurred_at) [name: 'idx_mood_patient_occurred']
+  }
+
+  Note: 'Tabla nueva, separada de DailyLog a propósito: mood se describe como un registro cronometrado de hasta una vez por hora, no "un valor por día", así que forzarlo como columna fija en DailyLog rompería el UNIQUE(patient_id, date) o exigiría guardar solo el último valor del día. Se descartó también el modelo genérico HabitEntry(patient_id, date, habit_type, value) para todos los hábitos: hoy water_ml/exercise_minutes/sleep_hours tienen tipos y validaciones distintas por columna, y un value genérico mueve todo ese chequeo a la capa de app sin necesidad real todavía. El rango de value (ej. escala 1-5) queda para validar en Zod/SPEC.md, no en el esquema. patient_id se valida con el trigger trg_check_mood_entry_patient_role (SQL al final del archivo), misma lógica que en DailyLog.'
+}
+
+Table RefreshToken {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [not null, ref: > User.id]
+  token_hash varchar [not null]
+  expires_at timestamp [not null]
+  revoked_at timestamp
+  created_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (user_id) [name: 'idx_refresh_token_user', note: 'Necesario para revocar en bloque todos los tokens de un usuario si se compromete la cuenta (UPDATE ... WHERE user_id = ?), y para listar sesiones activas. Sin este índice es un seq scan sobre toda la tabla.']
+    (token_hash) [unique, name: 'uniq_refresh_token_hash', note: 'El lookup por token_hash ocurre en cada request de refresh — sin índice es un seq scan en el hot path de auth. unique además detecta a nivel de esquema una colisión de hash, que no debería pasar pero no cuesta nada que la BD lo garantice.']
+  }
+
+  Note: 'Se guarda solo el hash del refresh token, nunca en texto plano. revoked_at permite invalidarlo individualmente (logout, rotación, o ante sospecha de compromiso) sin esperar a que expire solo — la fila puntual se marca, no hace falta borrarla. Para revocar "todos los tokens de este usuario" de una sola vez (cuenta comprometida) se actualiza por user_id, por eso el índice ahí es necesario y no opcional.'
+}
+
+// ---------------------------------------------------------------------------
+// Triggers — DBML no tiene sintaxis nativa para triggers, así que el SQL real
+// queda documentado acá para no perderlo al traducir este diagrama a Prisma
+// (Prisma tampoco modela triggers; esto se agrega como migración SQL manual,
+// ej. con `prisma migrate dev --create-only` + editar el .sql generado).
+// ---------------------------------------------------------------------------
+//
+// CREATE OR REPLACE FUNCTION check_patient_nutritionist_roles()
+// RETURNS TRIGGER AS $$
+// BEGIN
+//   IF NOT EXISTS (
+//     SELECT 1 FROM "User" WHERE id = NEW.patient_id AND role = 'PATIENT'
+//   ) THEN
+//     RAISE EXCEPTION 'patient_id % must reference a User with role PATIENT', NEW.patient_id;
+//   END IF;
+//
+//   IF NOT EXISTS (
+//     SELECT 1 FROM "User" WHERE id = NEW.nutritionist_id AND role = 'NUTRITIONIST'
+//   ) THEN
+//     RAISE EXCEPTION 'nutritionist_id % must reference a User with role NUTRITIONIST', NEW.nutritionist_id;
+//   END IF;
+//
+//   RETURN NEW;
+// END;
+// $$ LANGUAGE plpgsql;
+//
+// CREATE TRIGGER trg_check_patient_nutritionist_roles
+// BEFORE INSERT OR UPDATE ON "PatientNutritionist"
+// FOR EACH ROW EXECUTE FUNCTION check_patient_nutritionist_roles();
+//
+// -- Misma validación para patient_id en DailyLog y MoodEntry: el id referenciado
+// -- tiene que ser un User con role=PATIENT. Es la misma condición las dos veces,
+// -- así que se factoriza en una sola función reusada por ambos triggers.
+//
+// CREATE OR REPLACE FUNCTION check_patient_role()
+// RETURNS TRIGGER AS $$
+// BEGIN
+//   IF NOT EXISTS (
+//     SELECT 1 FROM "User" WHERE id = NEW.patient_id AND role = 'PATIENT'
+//   ) THEN
+//     RAISE EXCEPTION 'patient_id % must reference a User with role PATIENT', NEW.patient_id;
+//   END IF;
+//
+//   RETURN NEW;
+// END;
+// $$ LANGUAGE plpgsql;
+//
+// CREATE TRIGGER trg_check_daily_log_patient_role
+// BEFORE INSERT OR UPDATE ON "DailyLog"
+// FOR EACH ROW EXECUTE FUNCTION check_patient_role();
+//
+// CREATE TRIGGER trg_check_mood_entry_patient_role
+// BEFORE INSERT OR UPDATE ON "MoodEntry"
+// FOR EACH ROW EXECUTE FUNCTION check_patient_role();
