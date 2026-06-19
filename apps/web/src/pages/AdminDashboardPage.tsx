@@ -31,45 +31,59 @@ function UserRow({
   }
 
   return (
-    <li className="space-y-1 border-b border-slate-100 py-2 text-sm last:border-0">
+    <li className="border-b border-gray-100 py-3 last:border-0">
       {isEditing ? (
         <div className="space-y-2">
           <input
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            className="w-full rounded border border-slate-300 px-2 py-1"
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded border border-slate-300 px-2 py-1"
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
           />
-          {error && <p className="text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-2">
-            <button type="button" onClick={handleSave} className="rounded bg-slate-900 px-2 py-1 text-white">
+            <button
+              type="button"
+              onClick={handleSave}
+              className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-3 py-1.5 text-sm font-semibold text-white"
+            >
               Guardar
             </button>
-            <button type="button" onClick={() => setIsEditing(false)} className="text-slate-600 underline">
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            >
               Cancelar
             </button>
           </div>
         </div>
       ) : (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="font-medium text-slate-900">{user.full_name}</p>
-            <p className="text-slate-500">{user.email}</p>
-            <p className="text-xs text-slate-400">{user.is_active ? 'Activo' : 'Desactivado'}</p>
+          <div className="flex-1">
+            <p className="font-semibold text-black">{user.full_name}</p>
+            <p className="text-sm text-gray-600">{user.email}</p>
+            <p className={`text-xs ${user.is_active ? 'text-green-600' : 'text-red-600'}`}>
+              {user.is_active ? '✓ Activo' : '✗ Desactivado'}
+            </p>
           </div>
           <div className="flex flex-col items-start gap-1 sm:items-end">
-            <div className="flex gap-2">
-              <button type="button" onClick={() => setIsEditing(true)} className="text-slate-900 underline">
+            <div className="flex gap-2 text-sm">
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="font-medium text-blue-600 transition-colors hover:text-blue-700"
+              >
                 Editar
               </button>
               <button
                 type="button"
                 onClick={() => onToggleActive(user.id, !user.is_active)}
-                className="text-slate-900 underline"
+                className={`font-medium ${user.is_active ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}`}
               >
                 {user.is_active ? 'Desactivar' : 'Activar'}
               </button>
@@ -161,26 +175,35 @@ export function AdminDashboardPage() {
   }
 
   if (!nutritionists || !patients) {
-    return <p className="p-4 text-center text-sm text-slate-500">Cargando…</p>;
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-3">⏳</div>
+          <p className="text-sm text-gray-600">Cargando panel de administración...</p>
+        </div>
+      </main>
+    );
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-6xl space-y-6">
-        <PageHeader title="Admin" actions={<LogoutButton />} />
+    <main className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-white px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl space-y-8">
+        <PageHeader title="⚙️ Panel de Administración" actions={<LogoutButton />} />
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <section className="space-y-3 rounded border border-slate-200 bg-white p-4 md:col-span-2 lg:col-span-1">
-            <h2 className="font-medium text-slate-900">Crear usuario</h2>
-            <form onSubmit={handleCreateUser} className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
+          <section className="space-y-4 rounded-xl border border-gray-100 bg-white p-6 shadow-md shadow-blue-100/10 md:col-span-2 lg:col-span-1">
+            <div className="border-b border-gray-200 pb-3">
+              <h2 className="text-lg font-bold text-black">👤 Crear usuario</h2>
+            </div>
+            <form onSubmit={handleCreateUser} className="space-y-3">
               <select
                 aria-label="Rol del nuevo usuario"
                 value={createRole}
                 onChange={(e) => setCreateRole(e.target.value as 'PATIENT' | 'NUTRITIONIST')}
-                className="w-full rounded border border-slate-300 px-2 py-2 sm:col-span-2 lg:col-span-1"
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
               >
-                <option value="NUTRITIONIST">Nutrióloga</option>
-                <option value="PATIENT">Paciente</option>
+                <option value="NUTRITIONIST">👨‍⚕️ Nutrióloga</option>
+                <option value="PATIENT">🏥 Paciente</option>
               </select>
               <input
                 type="text"
@@ -188,7 +211,7 @@ export function AdminDashboardPage() {
                 placeholder="Nombre completo"
                 value={createFullName}
                 onChange={(e) => setCreateFullName(e.target.value)}
-                className="w-full rounded border border-slate-300 px-2 py-2"
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
               <input
                 type="email"
@@ -196,7 +219,7 @@ export function AdminDashboardPage() {
                 placeholder="Email"
                 value={createEmail}
                 onChange={(e) => setCreateEmail(e.target.value)}
-                className="w-full rounded border border-slate-300 px-2 py-2"
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
               <input
                 type="password"
@@ -206,36 +229,43 @@ export function AdminDashboardPage() {
                 placeholder="Contraseña"
                 value={createPassword}
                 onChange={(e) => setCreatePassword(e.target.value)}
-                className="w-full rounded border border-slate-300 px-2 py-2 sm:col-span-2 lg:col-span-1"
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
-              {createError && <p className="text-sm text-red-600 sm:col-span-2 lg:col-span-1">{createError}</p>}
+              {createError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                  <p className="text-sm font-medium text-red-700">{createError}</p>
+                </div>
+              )}
               <button
                 type="submit"
-                className="w-full rounded bg-slate-900 py-2 text-white sm:col-span-2 lg:col-span-1"
+                className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 py-2.5 font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-blue-400/30"
               >
-                Crear
+                ✔ Crear usuario
               </button>
             </form>
           </section>
 
-          <section className="space-y-2 rounded border border-slate-200 bg-white p-4">
-            <h2 className="font-medium text-slate-900">Nutriólogas</h2>
+          <section className="space-y-3 rounded-xl border border-gray-100 bg-white p-6 shadow-md shadow-blue-100/10">
+            <div className="border-b border-gray-200 pb-3">
+              <h2 className="text-lg font-bold text-black">👨‍⚕️ Nutriólogas</h2>
+              <p className="mt-1 text-sm text-gray-600">{nutritionists.length} nutrióloga{nutritionists.length !== 1 ? 's' : ''}</p>
+            </div>
             <div className="flex gap-2">
               <input
                 value={nutriQuery}
                 onChange={(e) => setNutriQuery(e.target.value)}
                 placeholder="Buscar"
-                className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm"
+                className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
               <button
                 type="button"
                 onClick={() => loadNutritionists(nutriQuery)}
-                className="rounded bg-slate-900 px-3 text-sm text-white"
+                className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-3 py-2 font-semibold text-white"
               >
-                Buscar
+                🔍
               </button>
             </div>
-            <ul>
+            <ul className="space-y-2 max-h-96 overflow-y-auto">
               {nutritionists.map((nutritionist) => (
                 <UserRow
                   key={nutritionist.id}
@@ -247,24 +277,27 @@ export function AdminDashboardPage() {
             </ul>
           </section>
 
-          <section className="space-y-2 rounded border border-slate-200 bg-white p-4">
-            <h2 className="font-medium text-slate-900">Pacientes</h2>
+          <section className="space-y-3 rounded-xl border border-gray-100 bg-white p-6 shadow-md shadow-blue-100/10">
+            <div className="border-b border-gray-200 pb-3">
+              <h2 className="text-lg font-bold text-black">🏥 Pacientes</h2>
+              <p className="mt-1 text-sm text-gray-600">{patients.length} paciente{patients.length !== 1 ? 's' : ''}</p>
+            </div>
             <div className="flex gap-2">
               <input
                 value={patientQuery}
                 onChange={(e) => setPatientQuery(e.target.value)}
                 placeholder="Buscar"
-                className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm"
+                className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
               <button
                 type="button"
                 onClick={() => loadPatients(patientQuery)}
-                className="rounded bg-slate-900 px-3 text-sm text-white"
+                className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-3 py-2 font-semibold text-white"
               >
-                Buscar
+                🔍
               </button>
             </div>
-            <ul>
+            <ul className="space-y-2 max-h-96 overflow-y-auto">
               {patients.map((patient) => (
                 <UserRow
                   key={patient.id}
@@ -273,8 +306,8 @@ export function AdminDashboardPage() {
                   onSave={handleSaveUser}
                   extra={
                     <div className="text-left sm:text-right">
-                      <p className="text-xs text-slate-400">
-                        {patient.holder ? `Asignado a ${patient.holder.full_name}` : 'Sin nutrióloga'}
+                      <p className="text-xs text-gray-500 mb-1">
+                        {patient.holder ? `👤 ${patient.holder.full_name}` : '⚠️ Sin nutrióloga'}
                       </p>
                       {reassigningPatientId === patient.id ? (
                         <div className="flex gap-1">
@@ -282,7 +315,7 @@ export function AdminDashboardPage() {
                             aria-label="Nueva nutrióloga para este paciente"
                             value={selectedNutritionistId}
                             onChange={(e) => setSelectedNutritionistId(e.target.value)}
-                            className="rounded border border-slate-300 text-xs"
+                            className="rounded-lg border border-gray-200 bg-gray-50 text-xs px-2 py-1 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                           >
                             <option value="">Elegir…</option>
                             {nutritionists.map((n) => (
@@ -294,16 +327,16 @@ export function AdminDashboardPage() {
                           <button
                             type="button"
                             onClick={() => handleReassign(patient.id)}
-                            className="text-slate-900 underline"
+                            className="font-medium text-blue-600 transition-colors hover:text-blue-700"
                           >
-                            Confirmar
+                            ✔
                           </button>
                         </div>
                       ) : (
                         <button
                           type="button"
                           onClick={() => setReassigningPatientId(patient.id)}
-                          className="text-slate-900 underline"
+                          className="font-medium text-blue-600 transition-colors hover:text-blue-700"
                         >
                           Reasignar
                         </button>

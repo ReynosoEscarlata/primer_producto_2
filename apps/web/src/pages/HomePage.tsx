@@ -17,8 +17,12 @@ export function HomePage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
-      <p className="text-slate-600">Tu panel todavía no está disponible en esta versión.</p>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-white via-blue-50 to-white p-4 text-center">
+      <div className="max-w-md">
+        <div className="mb-6 text-5xl">⏳</div>
+        <h1 className="text-2xl font-bold text-black mb-3">Tu panel se está preparando</h1>
+        <p className="text-gray-600">Tu panel de control personalizado estará disponible en esta versión próximamente.</p>
+      </div>
     </main>
   );
 }

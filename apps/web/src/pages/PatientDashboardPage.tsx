@@ -24,7 +24,14 @@ export function PatientDashboardPage() {
   }, []);
 
   if (!logs || !moodEntries || !profile) {
-    return <p className="p-4 text-center text-sm text-slate-500">Cargando…</p>;
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-3">⏳</div>
+          <p className="text-sm text-gray-600">Cargando tu panel...</p>
+        </div>
+      </main>
+    );
   }
 
   const todayLog = logs.find((log) => log.date === todayIsoDate()) ?? null;
@@ -37,9 +44,12 @@ export function PatientDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-5xl space-y-6">
-        <PageHeader title={`Hola, ${profile.full_name}`} actions={<LogoutButton />} />
+    <main className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-white px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl space-y-8">
+        <PageHeader
+          title={`¡Hola, ${profile.full_name}! 👋`}
+          actions={<LogoutButton />}
+        />
 
         <HistoryChart logs={logs} />
 
