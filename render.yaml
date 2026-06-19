@@ -3,7 +3,7 @@ services:
     name: nutri-habits-api
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build --workspace=packages/shared && npm run build --workspace=apps/api && npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
+    buildCommand: npm install --include=dev && npm run build --workspace=packages/shared && npm run build --workspace=apps/api && npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
     startCommand: npm run start --workspace=apps/api
     healthCheckPath: /health
     envVars:
@@ -21,7 +21,7 @@ services:
   - type: web
     name: nutri-habits-web
     runtime: static
-    buildCommand: npm install && npm run build --workspace=packages/shared && npm run build --workspace=apps/web
+    buildCommand: npm install --include=dev && npm run build --workspace=packages/shared && npm run build --workspace=apps/web
     staticPublishPath: apps/web/dist
     envVars:
       - key: VITE_API_BASE_URL
