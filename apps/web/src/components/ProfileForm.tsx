@@ -40,88 +40,101 @@ export function ProfileForm({ profile, onSaved }: ProfileFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded border border-slate-200 bg-white p-4">
-      <h2 className="font-medium text-slate-900">Perfil</h2>
-
-      <div className="space-y-1">
-        <label htmlFor="profile_full_name" className="block text-sm text-slate-700">
-          Nombre completo
-        </label>
-        <input
-          id="profile_full_name"
-          type="text"
-          required
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          className="w-full rounded border border-slate-300 px-3 py-2 text-base"
-        />
+    <form onSubmit={handleSubmit} className="space-y-5 rounded-xl border border-gray-100 bg-white p-6 shadow-md shadow-blue-100/10 transition-all duration-300 hover:shadow-lg hover:shadow-blue-100/20">
+      <div className="border-b border-gray-200 pb-3">
+        <h2 className="text-lg font-bold text-black">👤 Tu Perfil</h2>
+        <p className="mt-1 text-sm text-gray-600">Actualiza tu información personal</p>
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="profile_email" className="block text-sm text-slate-700">
-          Email
-        </label>
-        <input
-          id="profile_email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded border border-slate-300 px-3 py-2 text-base"
-        />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2 sm:col-span-2">
+          <label htmlFor="profile_full_name" className="block text-sm font-semibold text-gray-900">
+            Nombre completo
+          </label>
+          <input
+            id="profile_full_name"
+            type="text"
+            required
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-black transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+            placeholder="Tu nombre completo"
+          />
+        </div>
+
+        <div className="space-y-2 sm:col-span-2">
+          <label htmlFor="profile_email" className="block text-sm font-semibold text-gray-900">
+            Email
+          </label>
+          <input
+            id="profile_email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-black transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+            placeholder="tu@email.com"
+          />
+        </div>
+
+        <div className="space-y-2 sm:col-span-2">
+          <label htmlFor="profile_birth_date" className="block text-sm font-semibold text-gray-900">
+            📅 Fecha de nacimiento
+          </label>
+          <input
+            id="profile_birth_date"
+            type="date"
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-black transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="profile_height" className="block text-sm font-semibold text-gray-900">
+            📏 Altura (m)
+          </label>
+          <input
+            id="profile_height"
+            type="number"
+            min={0}
+            step={0.01}
+            value={height}
+            onChange={(e) => setHeight(e.target.value)}
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-black transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+            placeholder="1.70"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="profile_weight" className="block text-sm font-semibold text-gray-900">
+            ⚖️ Peso (kg)
+          </label>
+          <input
+            id="profile_weight"
+            type="number"
+            min={0}
+            step={0.1}
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-black transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+            placeholder="70"
+          />
+        </div>
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="profile_birth_date" className="block text-sm text-slate-700">
-          Fecha de nacimiento
-        </label>
-        <input
-          id="profile_birth_date"
-          type="date"
-          value={birthDate}
-          onChange={(e) => setBirthDate(e.target.value)}
-          className="w-full rounded border border-slate-300 px-3 py-2 text-base"
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label htmlFor="profile_height" className="block text-sm text-slate-700">
-          Altura (m)
-        </label>
-        <input
-          id="profile_height"
-          type="number"
-          min={0}
-          step={0.01}
-          value={height}
-          onChange={(e) => setHeight(e.target.value)}
-          className="w-full rounded border border-slate-300 px-3 py-2 text-base"
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label htmlFor="profile_weight" className="block text-sm text-slate-700">
-          Peso (kg)
-        </label>
-        <input
-          id="profile_weight"
-          type="number"
-          min={0}
-          step={0.1}
-          value={weight}
-          onChange={(e) => setWeight(e.target.value)}
-          className="w-full rounded border border-slate-300 px-3 py-2 text-base"
-        />
-      </div>
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+          <p className="text-sm font-medium text-red-700">{error}</p>
+        </div>
+      )}
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded bg-slate-900 py-2 text-white disabled:opacity-50"
+        className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 py-2.5 font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-blue-400/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
       >
-        Guardar perfil
+        {isSubmitting ? 'Guardando…' : '💾 Guardar cambios'}
       </button>
     </form>
   );

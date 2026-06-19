@@ -46,12 +46,15 @@ export function DailyLogForm({ todayLog, onSaved }: DailyLogFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded border border-slate-200 bg-white p-4">
-      <h2 className="font-medium text-slate-900">Hábitos de hoy</h2>
+    <form onSubmit={handleSubmit} className="space-y-5 rounded-xl border border-gray-100 bg-white p-6 shadow-md shadow-blue-100/10 transition-all duration-300 hover:shadow-lg hover:shadow-blue-100/20">
+      <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+        <h2 className="text-lg font-bold text-black">Hábitos de hoy</h2>
+        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">Diario</span>
+      </div>
 
-      <div className="space-y-1">
-        <label htmlFor="water_ml" className="block text-sm text-slate-700">
-          Agua (ml) — 0 a 10000
+      <div className="space-y-2">
+        <label htmlFor="water_ml" className="block text-sm font-semibold text-gray-900">
+          💧 Agua (ml)
         </label>
         <input
           id="water_ml"
@@ -61,13 +64,14 @@ export function DailyLogForm({ todayLog, onSaved }: DailyLogFormProps) {
           required
           value={waterMl}
           onChange={(e) => setWaterMl(Number(e.target.value))}
-          className="w-full rounded border border-slate-300 px-3 py-2 text-base"
+          className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-black transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+          placeholder="0 - 10000 ml"
         />
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="exercise_minutes" className="block text-sm text-slate-700">
-          Ejercicio (minutos) — 0 a 1440
+      <div className="space-y-2">
+        <label htmlFor="exercise_minutes" className="block text-sm font-semibold text-gray-900">
+          🏃 Ejercicio (minutos)
         </label>
         <input
           id="exercise_minutes"
@@ -77,13 +81,14 @@ export function DailyLogForm({ todayLog, onSaved }: DailyLogFormProps) {
           required
           value={exerciseMinutes}
           onChange={(e) => setExerciseMinutes(Number(e.target.value))}
-          className="w-full rounded border border-slate-300 px-3 py-2 text-base"
+          className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-black transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+          placeholder="0 - 1440 minutos"
         />
       </div>
 
-      <div className="space-y-1">
-        <label htmlFor="sleep_hours" className="block text-sm text-slate-700">
-          Sueño (horas) — 0 a 24
+      <div className="space-y-2">
+        <label htmlFor="sleep_hours" className="block text-sm font-semibold text-gray-900">
+          😴 Sueño (horas)
         </label>
         <input
           id="sleep_hours"
@@ -94,18 +99,23 @@ export function DailyLogForm({ todayLog, onSaved }: DailyLogFormProps) {
           required
           value={sleepHours}
           onChange={(e) => setSleepHours(Number(e.target.value))}
-          className="w-full rounded border border-slate-300 px-3 py-2 text-base"
+          className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-black transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+          placeholder="0 - 24 horas"
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+          <p className="text-sm font-medium text-red-700">{error}</p>
+        </div>
+      )}
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded bg-slate-900 py-2 text-white disabled:opacity-50"
+        className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 py-2.5 font-semibold text-white transition-all duration-300 hover:shadow-lg hover:shadow-blue-400/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
       >
-        {todayLog ? 'Actualizar log de hoy' : 'Guardar log de hoy'}
+        {isSubmitting ? 'Guardando…' : todayLog ? '📝 Actualizar' : '💾 Guardar'}
       </button>
     </form>
   );

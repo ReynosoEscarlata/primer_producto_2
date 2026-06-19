@@ -2,7 +2,7 @@
 
 Catálogo de endpoints REST, derivado de la entrevista de diseño (ver historial de conversación) sobre el esquema aprobado en `docs/db-diagram.dbml`. Este es un **borrador para revisar**, no una decisión cerrada: los paths exactos y nombres de campos son una propuesta razonable a partir de lo que se discutió, no algo que ya esté validado contigo.
 
-## Convenciones generales (asumidas — corregir si no aplica)
+## Convenciones generales
 
 - Todos los campos JSON en `snake_case`, igual que las columnas del diagrama (`full_name`, `water_ml`, etc.).
 - Fechas como `date` en formato `YYYY-MM-DD`; timestamps como `timestamp` en ISO 8601 UTC.
