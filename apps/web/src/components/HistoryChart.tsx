@@ -2,18 +2,28 @@ import type { DailyLog } from '../lib/types.js';
 
 interface MiniBarChartProps {
   label: string;
+  dates: string[];
   values: number[];
   max: number;
 }
 
-function MiniBarChart({ label, values, max }: MiniBarChartProps) {
+function formatShortDate(date: string): string {
+  const [, month, day] = date.split('-');
+  return `${day}/${month}`;
+}
+
+function MiniBarChart({ label, dates, values, max }: MiniBarChartProps) {
   const width = 300;
   const height = 48;
   const barWidth = values.length > 0 ? width / values.length : width;
+  const lastValue = values[values.length - 1];
 
   return (
     <div>
-      <p className="mb-1 text-xs text-slate-500">{label}</p>
+      <p className="mb-1 flex items-baseline justify-between text-xs text-slate-500">
+        <span>{label}</span>
+        <span className="text-sm font-semibold text-slate-900">Último: {lastValue}</span>
+      </p>
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="h-12 w-full sm:h-16 lg:h-20"
@@ -33,6 +43,13 @@ function MiniBarChart({ label, values, max }: MiniBarChartProps) {
           );
         })}
       </svg>
+      <ul className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-xs text-slate-600">
+        {dates.map((date, index) => (
+          <li key={date}>
+            {formatShortDate(date)}: <span className="font-medium text-slate-900">{values[index]}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -54,9 +71,24 @@ export function HistoryChart({ logs }: HistoryChartProps) {
     <div className="space-y-3 rounded border border-slate-200 bg-white p-4">
       <h2 className="font-medium text-slate-900">Historial (30 días)</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <MiniBarChart label="Agua (ml)" values={logs.map((l) => l.water_ml)} max={10000} />
-        <MiniBarChart label="Ejercicio (min)" values={logs.map((l) => l.exercise_minutes)} max={1440} />
-        <MiniBarChart label="Sueño (hs)" values={logs.map((l) => l.sleep_hours)} max={24} />
+        <MiniBarChart
+          label="Agua (ml)"
+          dates={logs.map((l) => l.date)}
+          values={logs.map((l) => l.water_ml)}
+          max={10000}
+        />
+        <MiniBarChart
+          label="Ejercicio (min)"
+          dates={logs.map((l) => l.date)}
+          values={logs.map((l) => l.exercise_minutes)}
+          max={1440}
+        />
+        <MiniBarChart
+          label="Sueño (hs)"
+          dates={logs.map((l) => l.date)}
+          values={logs.map((l) => l.sleep_hours)}
+          max={24}
+        />
       </div>
     </div>
   );
